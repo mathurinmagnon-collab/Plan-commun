@@ -1,0 +1,785 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Plateau JDR — PlanCommun</title>
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+body { font-family: system-ui, sans-serif; background: #111; display: flex; align-items: center; justify-content: center; min-height: 100vh; }
+#root { width: 100vw; max-width: 1100px; height: 100vh; max-height: 780px; display: flex; flex-direction: column; background: #1a1a1a; border-radius: 12px; overflow: hidden; border: 1px solid #333; }
+
+/* ACCUEIL */
+#welcome-screen { display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100%; gap: 24px; }
+#welcome-screen h1 { font-size: 28px; color: #f0ead6; font-weight: 600; }
+.role-cards { display: flex; gap: 16px; }
+.role-card { width: 200px; padding: 24px 20px; border-radius: 12px; border: 1px solid #333; background: #222; cursor: pointer; text-align: center; transition: border-color .2s, background .2s; }
+.role-card:hover { border-color: #c9a84c; background: #2a2a1f; }
+.role-card .icon { font-size: 36px; margin-bottom: 10px; }
+.role-card h2 { font-size: 15px; color: #f0ead6; margin-bottom: 6px; }
+.role-card p { font-size: 12px; color: #888; }
+.session-tag { font-size: 12px; color: #666; }
+.session-tag span { color: #c9a84c; font-weight: 600; }
+
+/* TOPBAR */
+.topbar { display: flex; align-items: center; gap: 10px; padding: 10px 16px; border-bottom: 1px solid #2a2a2a; background: #161616; flex-shrink: 0; }
+.topbar h2 { font-size: 14px; font-weight: 500; color: #f0ead6; flex: 1; }
+.vtag { font-size: 11px; padding: 2px 8px; border-radius: 20px; border: 1px solid #333; color: #888; background: #222; }
+.vtag.mj { color: #c9a84c; border-color: #c9a84c44; background: #c9a84c11; }
+.vtag.player { color: #7db8e8; border-color: #7db8e844; background: #7db8e811; }
+.btn { font-size: 12px; padding: 5px 10px; border-radius: 8px; border: 1px solid #333; background: #222; color: #ccc; cursor: pointer; display: inline-flex; align-items: center; gap: 5px; transition: background .15s; }
+.btn:hover { background: #2a2a2a; color: #f0ead6; }
+.btn.gold { background: #c9a84c22; color: #c9a84c; border-color: #c9a84c44; }
+.btn.gold:hover { background: #c9a84c33; }
+.btn.danger { background: #e2444422; color: #e24444; border-color: #e2444444; }
+.online-pill { display: flex; align-items: center; gap: 5px; font-size: 11px; color: #888; padding: 3px 8px; border-radius: 20px; border: 1px solid #2a2a2a; background: #1e1e1e; }
+.dot { width: 6px; height: 6px; border-radius: 50%; background: #22c55e; animation: pulse 2s infinite; }
+@keyframes pulse { 0%,100%{opacity:1} 50%{opacity:.4} }
+
+/* LAYOUT MJ */
+#mj-body { display: flex; flex: 1; overflow: hidden; min-height: 0; }
+#sidebar { width: 220px; border-right: 1px solid #2a2a2a; display: flex; flex-direction: column; flex-shrink: 0; background: #181818; }
+#stabs { display: flex; border-bottom: 1px solid #2a2a2a; flex-shrink: 0; }
+.stab { flex: 1; font-size: 12px; padding: 9px 4px; text-align: center; cursor: pointer; color: #666; border: none; background: none; border-bottom: 2px solid transparent; }
+.stab.on { color: #f0ead6; border-bottom-color: #c9a84c; }
+#spanel { flex: 1; overflow-y: auto; padding: 12px; }
+#spanel::-webkit-scrollbar { width: 4px; }
+#spanel::-webkit-scrollbar-thumb { background: #333; border-radius: 2px; }
+.stitle { font-size: 10px; font-weight: 600; color: #555; text-transform: uppercase; letter-spacing: .06em; margin: 8px 0 5px; }
+.stitle:first-child { margin-top: 0; }
+.pcard { display: flex; align-items: center; gap: 8px; padding: 8px; border-radius: 8px; border: 1px solid #2a2a2a; margin-bottom: 6px; background: #1e1e1e; }
+.pav { width: 32px; height: 32px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 16px; flex-shrink: 0; overflow: hidden; }
+.pav img { width: 100%; height: 100%; object-fit: cover; border-radius: 50%; }
+.pname { font-size: 12px; font-weight: 500; color: #e0e0e0; }
+.ppos { font-size: 10px; color: #555; }
+.pacts { margin-left: auto; display: flex; gap: 3px; }
+.smbtn { font-size: 11px; padding: 3px 6px; border-radius: 6px; border: 1px solid #2a2a2a; background: #222; color: #666; cursor: pointer; }
+.smbtn:hover { background: #2a2a2a; color: #ccc; }
+.mbtn { font-size: 11px; padding: 6px 8px; border-radius: 8px; border: 1px solid #2a2a2a; background: #1e1e1e; color: #aaa; cursor: pointer; display: flex; align-items: center; gap: 6px; width: 100%; margin-bottom: 5px; }
+.mbtn:hover { background: #252525; color: #e0e0e0; }
+.mbtn.on { border-color: #c9a84c44; background: #c9a84c11; color: #c9a84c; }
+.cswatch { width: 24px; height: 24px; border-radius: 50%; cursor: pointer; border: 2px solid transparent; flex-shrink: 0; transition: transform .1s; }
+.cswatch:hover { transform: scale(1.15); }
+.cswatch.on { border-color: #fff; }
+
+/* CARTE */
+#map-wrap { flex: 1; position: relative; overflow: hidden; min-width: 0; }
+#map-wrap canvas { position: absolute; inset: 0; width: 100%; height: 100%; }
+#tok-layer { position: absolute; inset: 0; pointer-events: none; }
+
+/* JETONS */
+.tok { position: absolute; transform: translate(-50%,-58%); pointer-events: all; cursor: grab; user-select: none; display: flex; flex-direction: column; align-items: center; }
+.tok:active { cursor: grabbing; }
+.tok.locked { cursor: default; pointer-events: none; opacity: .85; }
+.tok-circle { width: var(--tok-size, 44px); height: var(--tok-size, 44px); border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: calc(var(--tok-size, 44px) * 0.5); border: 3px solid white; box-shadow: 0 2px 6px rgba(0,0,0,.4); overflow: hidden; flex-shrink: 0; }
+.tok-circle img { width: 100%; height: 100%; object-fit: cover; border-radius: 50%; display: block; }
+.tok-name { font-size: 10px; font-weight: 600; white-space: nowrap; background: rgba(0,0,0,.75); color: #fff; padding: 2px 6px; border-radius: 10px; margin-top: 3px; }
+.tok.mine .tok-circle { box-shadow: 0 0 0 3px #fff, 0 0 0 5px var(--tok-color,#c9a84c); }
+
+/* MODAL MJ */
+.overlay { display: none; position: absolute; inset: 0; background: rgba(0,0,0,.65); z-index: 50; align-items: center; justify-content: center; }
+.overlay.open { display: flex; }
+.modal-box { background: #1e1e1e; border-radius: 12px; padding: 22px; width: 360px; max-height: 88vh; overflow-y: auto; border: 1px solid #333; }
+.modal-box::-webkit-scrollbar { width: 4px; }
+.modal-box::-webkit-scrollbar-thumb { background: #333; border-radius: 2px; }
+.modal-box h3 { font-size: 15px; font-weight: 600; margin-bottom: 18px; color: #f0ead6; }
+.frow { margin-bottom: 14px; }
+.frow > label.flabel { font-size: 10px; font-weight: 600; color: #555; display: block; margin-bottom: 6px; text-transform: uppercase; letter-spacing: .06em; }
+.frow input[type=text] { width: 100%; padding: 8px 10px; font-size: 13px; border: 1px solid #333; border-radius: 8px; background: #252525; color: #e0e0e0; outline: none; }
+.frow input[type=text]:focus { border-color: #c9a84c66; }
+
+/* ZONE IMPORT ICONE MJ */
+.icon-zone { display: flex; align-items: center; gap: 14px; padding: 12px; background: #252525; border-radius: 10px; border: 1px solid #333; }
+.icon-circle { width: 56px; height: 56px; border-radius: 50%; background: #1a1a1a; border: 2px dashed #444; display: flex; align-items: center; justify-content: center; font-size: 26px; flex-shrink: 0; overflow: hidden; cursor: pointer; transition: border-color .2s; }
+.icon-circle:hover { border-color: #c9a84c88; }
+.icon-circle.has-img { border: 2px solid #c9a84c; }
+.icon-circle img { width: 100%; height: 100%; object-fit: cover; border-radius: 50%; display: block; }
+.icon-actions { display: flex; flex-direction: column; gap: 7px; }
+.import-lbl { font-size: 12px; padding: 6px 12px; border-radius: 8px; border: 1px solid #444; background: #1e1e1e; color: #aaa; cursor: pointer; display: inline-flex; align-items: center; gap: 6px; }
+.import-lbl:hover { border-color: #c9a84c; color: #c9a84c; }
+.remove-btn { font-size: 11px; padding: 4px 10px; border-radius: 6px; border: 1px solid #3a3a3a; background: transparent; color: #666; cursor: pointer; width: fit-content; }
+.remove-btn:hover { color: #e24444; border-color: #e24444; }
+.icon-hint { font-size: 10px; color: #555; line-height: 1.4; }
+
+.egrid { display: grid; grid-template-columns: repeat(6,1fr); gap: 3px; margin-top: 4px; }
+.eopt { font-size: 20px; padding: 4px; border-radius: 6px; cursor: pointer; text-align: center; border: 2px solid transparent; }
+.eopt:hover { background: #2a2a2a; }
+.eopt.on { border-color: #c9a84c; background: #c9a84c11; }
+.macts { display: flex; gap: 8px; justify-content: flex-end; margin-top: 18px; padding-top: 14px; border-top: 1px solid #2a2a2a; }
+
+/* PICKER JOUEUR */
+#char-picker { display: none; position: absolute; inset: 0; background: rgba(0,0,0,.7); z-index: 20; align-items: center; justify-content: center; }
+#char-picker.open { display: flex; }
+#picker-box { background: #1e1e1e; border-radius: 14px; padding: 22px; width: 340px; border: 1px solid #333; max-height: 90vh; overflow-y: auto; }
+#picker-box h3 { font-size: 16px; font-weight: 600; color: #f0ead6; margin-bottom: 4px; }
+#picker-box > p { font-size: 12px; color: #666; margin-bottom: 16px; }
+.pick-card { display: flex; align-items: center; gap: 12px; padding: 10px 12px; border-radius: 10px; border: 1px solid #2a2a2a; margin-bottom: 8px; background: #222; }
+.pick-av { width: 44px; height: 44px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 24px; flex-shrink: 0; overflow: hidden; border: 2px solid #333; }
+.pick-av img { width: 100%; height: 100%; object-fit: cover; border-radius: 50%; }
+.pick-name { font-size: 13px; font-weight: 500; color: #e0e0e0; }
+.pick-sub { font-size: 11px; color: #555; margin-top: 1px; }
+.pick-actions { margin-left: auto; display: flex; flex-direction: column; gap: 5px; align-items: flex-end; }
+.pick-play { font-size: 11px; padding: 5px 12px; border-radius: 8px; border: 1px solid #c9a84c44; background: #c9a84c22; color: #c9a84c; cursor: pointer; font-weight: 500; }
+.pick-play:hover { background: #c9a84c33; }
+.pick-upload-lbl { font-size: 11px; padding: 4px 8px; border-radius: 6px; border: 1px solid #2a2a2a; background: #1a1a1a; color: #666; cursor: pointer; display: inline-flex; align-items: center; gap: 4px; }
+.pick-upload-lbl:hover { color: #aaa; border-color: #333; }
+
+/* VUE JOUEUR */
+#pv-map-wrap { flex: 1; position: relative; overflow: hidden; min-height: 0; }
+#pv-map-wrap canvas { position: absolute; inset: 0; width: 100%; height: 100%; }
+#pv-tok-layer { position: absolute; inset: 0; pointer-events: none; }
+#pv-status { padding: 8px 16px; border-top: 1px solid #2a2a2a; background: #161616; font-size: 11px; color: #666; display: flex; align-items: center; gap: 8px; flex-shrink: 0; }
+
+/* TOAST + LOADER */
+#toast { position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%) translateY(60px); background: #2a2a2a; color: #e0e0e0; padding: 8px 16px; border-radius: 20px; font-size: 12px; border: 1px solid #333; transition: transform .3s; z-index: 200; pointer-events: none; }
+#toast.show { transform: translateX(-50%) translateY(0); }
+#loader { position: fixed; inset: 0; background: #111; display: flex; align-items: center; justify-content: center; z-index: 300; flex-direction: column; gap: 12px; transition: opacity .4s; }
+#loader.hide { opacity: 0; pointer-events: none; }
+.spinner { width: 32px; height: 32px; border: 3px solid #333; border-top-color: #c9a84c; border-radius: 50%; animation: spin .7s linear infinite; }
+@keyframes spin { to { transform: rotate(360deg); } }
+#loader p { color: #666; font-size: 13px; }
+#bg-file { display: none; }
+</style>
+</head>
+<body>
+
+<div id="loader"><div class="spinner"></div><p>Connexion a Firebase...</p></div>
+<div id="toast"></div>
+
+<div id="root">
+
+  <!-- ACCUEIL -->
+  <div id="welcome-screen">
+    <div style="text-align:center">
+      <div style="font-size:40px;margin-bottom:8px">🗺️</div>
+      <h1>PlanCommun JDR</h1>
+      <p style="margin-top:6px;color:#888;font-size:14px">Plateau de jeu de role partage en temps reel</p>
+    </div>
+    <div class="role-cards">
+      <div class="role-card" onclick="enterAs('mj')">
+        <div class="icon">👑</div>
+        <h2>Maitre du Jeu</h2>
+        <p>Gerez les personnages, la carte et la session</p>
+      </div>
+      <div class="role-card" onclick="enterAs('player')">
+        <div class="icon">⚔️</div>
+        <h2>Joueur</h2>
+        <p>Choisissez votre personnage et deplacez votre pion</p>
+      </div>
+    </div>
+    <div class="session-tag">Session : <span id="welcome-session">...</span></div>
+  </div>
+
+  <!-- VUE MJ -->
+  <div id="mj-screen" style="display:none;flex-direction:column;height:100%">
+    <div class="topbar">
+      <h2>🗺️ PlanCommun JDR</h2>
+      <div class="online-pill"><span class="dot"></span><span id="online-count">0</span> en ligne</div>
+      <span class="vtag mj">👑 Maitre du Jeu</span>
+      <button class="btn" onclick="switchToWelcome()">← Quitter</button>
+    </div>
+    <div id="mj-body">
+      <div id="sidebar">
+        <div id="stabs">
+          <button class="stab on" onclick="showTab('players')">Joueurs</button>
+          <button class="stab" onclick="showTab('map')">Carte</button>
+        </div>
+        <div id="spanel">
+          <div id="tab-players">
+            <div class="stitle" id="count-title">Personnages (0/4)</div>
+            <div id="plist"></div>
+            <button class="btn gold" style="width:100%;justify-content:center;margin-top:4px" onclick="openModal(null)">+ Ajouter un personnage</button>
+            <div class="stitle" style="margin-top:16px">Lien de session</div>
+            <div id="session-url-display" style="font-size:10px;font-family:monospace;background:#111;padding:7px 8px;border-radius:8px;border:1px solid #2a2a2a;color:#888;word-break:break-all;margin-bottom:6px"></div>
+            <button class="btn" style="width:100%;justify-content:center" onclick="copyLink(this)">📋 Copier le lien</button>
+          </div>
+          <div id="tab-map" style="display:none">
+            <div class="stitle">Fond de carte</div>
+            <button class="mbtn on" id="bg-btn-none" onclick="setBg('none')">⬜ Fond neutre</button>
+            <button class="mbtn" id="bg-btn-grid" onclick="setBg('grid')">⊞ Grille carree</button>
+            <button class="mbtn" id="bg-btn-hex" onclick="setBg('hex')">⬡ Grille hexagonale</button>
+            <button class="mbtn" onclick="document.getElementById('bg-file').click()">🖼️ Importer une image</button>
+            <input type="file" id="bg-file" accept="image/*" onchange="loadBgImg(event)">
+            <div class="stitle">Couleur de fond</div>
+            <div style="display:flex;gap:6px;flex-wrap:wrap" id="color-swatches"></div>
+            <div class="stitle">Taille de grille</div>
+            <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px">
+              <input type="range" min="20" max="80" value="40" step="1" id="grid-size" oninput="setGridSize(this.value)" style="flex:1;accent-color:#c9a84c">
+              <span id="gs-label" style="font-size:12px;color:#555;min-width:34px">40px</span>
+            </div>
+            <div class="stitle">Taille des icones</div>
+            <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px">
+              <input type="range" min="10" max="80" value="44" step="2" id="tok-size-slider" oninput="setTokSize(this.value)" style="flex:1;accent-color:#7db8e8">
+              <span id="tok-size-label" style="font-size:12px;color:#555;min-width:34px">44px</span>
+            </div>
+            <div class="stitle">Danger</div>
+            <button class="btn danger" style="width:100%;justify-content:center" onclick="resetSession()">🗑️ Reinitialiser la session</button>
+          </div>
+        </div>
+      </div>
+
+      <div id="map-wrap">
+        <canvas id="bg-canvas"></canvas>
+        <div id="tok-layer"></div>
+
+        <div class="overlay" id="modal-wrap">
+          <div class="modal-box">
+            <h3 id="modal-title">Ajouter un personnage</h3>
+
+            <div class="frow">
+              <label class="flabel">Nom du personnage</label>
+              <input type="text" id="p-name" placeholder="ex: Elara, Thorin...">
+            </div>
+
+            <div class="frow">
+              <label class="flabel">Icone personnalisee (optionnel)</label>
+              <div class="icon-zone">
+                <div class="icon-circle" id="modal-icon-circle" onclick="document.getElementById('modal-icon-file').click()">
+                  <span id="modal-icon-placeholder">📤</span>
+                </div>
+                <div class="icon-actions">
+                  <label class="import-lbl">
+                    📤 Importer une image
+                    <input type="file" id="modal-icon-file" accept="image/*" style="display:none">
+                  </label>
+                  <button class="remove-btn" id="modal-remove-btn" style="display:none" onclick="clearModalIcon()">✕ Retirer l'image</button>
+                  <div class="icon-hint">Remplace l'emoji sur le jeton.<br>Rogee en carre automatiquement.</div>
+                </div>
+              </div>
+            </div>
+
+            <div class="frow">
+              <label class="flabel">Emoji (si pas d'image)</label>
+              <div class="egrid" id="egrid"></div>
+            </div>
+
+            <div class="frow">
+              <label class="flabel">Couleur du cercle</label>
+              <div style="display:flex;gap:6px;flex-wrap:wrap" id="cgrid"></div>
+            </div>
+
+            <div class="macts">
+              <button class="btn" onclick="closeModal()">Annuler</button>
+              <button class="btn gold" onclick="saveChar()">Enregistrer</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- VUE JOUEUR -->
+  <div id="pv-screen" style="display:none;flex-direction:column;height:100%">
+    <div class="topbar">
+      <button class="btn" onclick="switchToWelcome()">← Quitter</button>
+      <div class="pav" id="pv-av" style="font-size:20px;border:2px solid #333;background:#222;width:36px;height:36px;flex-shrink:0;border-radius:50%;display:flex;align-items:center;justify-content:center;overflow:hidden"></div>
+      <div style="flex:1;min-width:0">
+        <div style="font-size:13px;font-weight:500;color:#f0ead6" id="pv-name">Choisissez votre personnage</div>
+        <div style="font-size:10px;color:#555" id="pv-hint">Selectionnez un personnage pour commencer</div>
+      </div>
+      <div class="online-pill"><span class="dot"></span><span id="pv-online-count">0</span> en ligne</div>
+      <button class="btn" onclick="openPicker()" id="change-btn" style="display:none">↔ Changer</button>
+      <span class="vtag player">⚔️ Joueur</span>
+    </div>
+    <div id="pv-map-wrap">
+      <canvas id="pv-canvas"></canvas>
+      <div id="pv-tok-layer"></div>
+      <div id="char-picker">
+        <div id="picker-box">
+          <h3>Qui etes-vous ?</h3>
+          <p>Choisissez votre personnage. Vous pouvez importer votre propre icone.</p>
+          <div id="picker-list"></div>
+        </div>
+      </div>
+    </div>
+    <div id="pv-status">
+      <span class="dot"></span>
+      Session <span id="pv-session-id" style="color:#c9a84c;font-weight:600"></span> -
+      <span id="pv-char-count">0</span> personnages -
+      Vous jouez : <span id="pv-my-name" style="color:#c9a84c;font-weight:600">-</span>
+    </div>
+  </div>
+
+</div>
+
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+import { getDatabase, ref, set, onValue, update, remove, onDisconnect, serverTimestamp, push }
+  from "https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js";
+
+const firebaseConfig = {
+  apiKey: "AIzaSyBNskdeftVzAEDSeWndMZwEC3fNKuoC_LE",
+  authDomain: "plancommun-jdr.firebaseapp.com",
+  databaseURL: "https://plancommun-jdr-default-rtdb.europe-west1.firebasedatabase.app",
+  projectId: "plancommun-jdr",
+  storageBucket: "plancommun-jdr.firebasestorage.app",
+  messagingSenderId: "591284082025",
+  appId: "1:591284082025:web:6c6c8b995b033ecbd619f8"
+};
+
+const fbApp = initializeApp(firebaseConfig);
+const db = getDatabase(fbApp);
+
+// SESSION
+function getSessionId() {
+  const p = new URLSearchParams(window.location.search);
+  if (p.get('s')) return p.get('s').toUpperCase();
+  let id = sessionStorage.getItem('jdr-session');
+  if (!id) { id = Math.random().toString(36).substr(2,6).toUpperCase(); sessionStorage.setItem('jdr-session', id); }
+  return id;
+}
+const SESSION_ID = getSessionId();
+const SR = 'sessions/' + SESSION_ID;
+
+const EMOJIS = ['🧙','⚔️','🏹','🛡️','🗡️','🔮','🐉','🦅','💀','🌙','⚡','🔥','❄️','🌿','🏴','👁️','🎭','🦁','🐺','🧝'];
+const COLORS  = ['#7F77DD','#1D9E75','#D85A30','#D4537E','#378ADD','#639922','#BA7517','#E24B4A','#888780','#185FA5'];
+const BG_OPTS = [
+  {v:'#1c1c1c',t:'Sombre'},{v:'#f5f0e8',t:'Parchemin'},{v:'#e8f0e8',t:'Foret'},
+  {v:'#e8ecf5',t:'Glace'},{v:'#2c2c2a',t:'Donjon'},{v:'#1a1a2e',t:'Nuit'}
+];
+
+let chars = {};
+let mapState = { bgMode:'none', bgColor:'#1c1c1c', gridSize:40, bgImgData:null, tokSize:44 };
+let myRole = null, myCharId = null;
+let editId = null, selEmoji = EMOJIS[0], selColor = COLORS[0], selCustomImg = null;
+let drag = null, dox = 0, doy = 0, dragLayer = null;
+let bgImageEl = null, presenceKey = null;
+
+// FIREBASE LISTENERS
+onValue(ref(db, SR + '/chars'), snap => {
+  chars = snap.val() || {};
+  renderList(); renderMJTokens(); renderPVTokens(); updatePVBar();
+});
+onValue(ref(db, SR + '/map'), snap => {
+  const d = snap.val(); if (!d) return;
+  const prevImg = mapState.bgImgData;
+  mapState = Object.assign({}, mapState, d);
+  if (d.bgImgData && d.bgImgData !== prevImg) {
+    const img = new Image();
+    img.onload = () => { bgImageEl = img; drawBg(); drawPVBg(); };
+    img.src = d.bgImgData;
+  } else if (!d.bgImgData) {
+    bgImageEl = null;
+    drawBg(); drawPVBg();
+  } else {
+    drawBg(); drawPVBg();
+  }
+  applyTokSize(mapState.tokSize || 44);
+  syncMapUI();
+});
+onValue(ref(db, SR + '/presence'), snap => {
+  const n = Object.keys(snap.val() || {}).length;
+  ['online-count','pv-online-count'].forEach(id => { const el=document.getElementById(id); if(el) el.textContent=n; });
+});
+
+// NAVIGATION
+window.enterAs = function(role) {
+  myRole = role;
+  document.getElementById('welcome-screen').style.display = 'none';
+  if (role === 'mj') {
+    document.getElementById('mj-screen').style.display = 'flex';
+    setTimeout(() => { drawBg(); renderMJTokens(); }, 60);
+  } else {
+    document.getElementById('pv-screen').style.display = 'flex';
+    setTimeout(() => { drawPVBg(); renderPVTokens(); openPicker(); }, 60);
+  }
+  const pRef = ref(db, SR + '/presence');
+  const key = push(pRef).key;
+  presenceKey = key;
+  const myPRef = ref(db, SR + '/presence/' + key);
+  set(myPRef, { role: role, ts: serverTimestamp() });
+  onDisconnect(myPRef).remove();
+};
+
+window.switchToWelcome = function() {
+  myRole = null; myCharId = null;
+  document.getElementById('welcome-screen').style.display = 'flex';
+  document.getElementById('mj-screen').style.display = 'none';
+  document.getElementById('pv-screen').style.display = 'none';
+  if (presenceKey) remove(ref(db, SR + '/presence/' + presenceKey));
+};
+
+window.showTab = function(t) {
+  document.querySelectorAll('.stab').forEach((b,i) => b.classList.toggle('on', (i===0&&t==='players')||(i===1&&t==='map')));
+  document.getElementById('tab-players').style.display = t==='players' ? 'block' : 'none';
+  document.getElementById('tab-map').style.display = t==='map' ? 'block' : 'none';
+};
+
+// LISTE
+function renderList() {
+  const pl = document.getElementById('plist'); if (!pl) return;
+  pl.innerHTML = '';
+  Object.values(chars).forEach(c => {
+    const d = document.createElement('div'); d.className = 'pcard';
+    const avInner = c.customImg ? '<img src="' + c.customImg + '">' : '<span style="font-size:16px">' + c.emoji + '</span>';
+    const hiddenStyle = c.hidden ? 'color:#e24444;border-color:#e2444466' : '';
+    const hiddenIcon = c.hidden ? '🙈' : '👁️';
+    const hiddenTitle = c.hidden ? 'Rendre visible' : 'Masquer aux joueurs';
+    d.innerHTML = '<div class="pav" style="background:' + c.color + '25;border:2px solid ' + (c.hidden?'#555':c.color) + ';opacity:' + (c.hidden?'0.5':'1') + '">' + avInner + '</div>'
+      + '<div style="flex:1;min-width:0"><div class="pname" style="' + (c.hidden?'color:#666':'') + '">' + c.name + (c.hidden?' <span style="font-size:10px;color:#e24444">(caché)</span>':'') + '</div><div class="ppos">' + Math.round(c.x||50) + '%, ' + Math.round(c.y||50) + '%</div></div>'
+      + '<div class="pacts"><button class="smbtn" title="' + hiddenTitle + '" onclick="toggleHidden(\'' + c.id + '\')" style="' + hiddenStyle + '">' + hiddenIcon + '</button><button class="smbtn" onclick="openModal(\'' + c.id + '\')">✏️</button><button class="smbtn" onclick="removeChar(\'' + c.id + '\')">🗑</button></div>';
+    pl.appendChild(d);
+  });
+  const ct = document.getElementById('count-title');
+  if (ct) ct.textContent = 'Personnages (' + Object.keys(chars).length + '/4)';
+}
+
+// CANVAS
+function drawCanvasBg(canvas, wrap) {
+  if (!canvas || !wrap) return false;
+  const w = wrap.clientWidth, h = wrap.clientHeight;
+  if (!w || !h) return false;
+  canvas.width = w; canvas.height = h;
+  const ctx = canvas.getContext('2d');
+  if (bgImageEl) { ctx.drawImage(bgImageEl, 0, 0, w, h); }
+  else { ctx.fillStyle = mapState.bgColor || '#1c1c1c'; ctx.fillRect(0, 0, w, h); }
+  const gs = mapState.gridSize || 40;
+  ctx.strokeStyle = 'rgba(200,200,200,0.12)'; ctx.lineWidth = 0.8;
+  if (mapState.bgMode === 'grid') {
+    for (let x=0; x<w; x+=gs) { ctx.beginPath(); ctx.moveTo(x,0); ctx.lineTo(x,h); ctx.stroke(); }
+    for (let y=0; y<h; y+=gs) { ctx.beginPath(); ctx.moveTo(0,y); ctx.lineTo(w,y); ctx.stroke(); }
+  } else if (mapState.bgMode === 'hex') {
+    const r=gs/2, dx=r*Math.sqrt(3), dy=r*1.5;
+    for (let row=0; row*dy<h+r*2; row++) {
+      for (let col=0; col*dx<w+dx; col++) {
+        const ox=col*dx+(row%2?dx/2:0), oy=row*dy;
+        ctx.beginPath();
+        for (let i=0; i<6; i++) { const a=Math.PI/3*i-Math.PI/6; ctx.lineTo(ox+r*Math.cos(a), oy+r*Math.sin(a)); }
+        ctx.closePath(); ctx.stroke();
+      }
+    }
+  }
+  return true;
+}
+function drawBg() { drawCanvasBg(document.getElementById('bg-canvas'), document.getElementById('map-wrap')); }
+function drawPVBg() {
+  const ok = drawCanvasBg(document.getElementById('pv-canvas'), document.getElementById('pv-map-wrap'));
+  if (!ok) setTimeout(() => { drawPVBg(); renderPVTokens(); }, 80);
+}
+function syncMapUI() {
+  ['none','grid','hex'].forEach(k => { const b=document.getElementById('bg-btn-'+k); if(b) b.classList.toggle('on', k===mapState.bgMode); });
+  const sl=document.getElementById('grid-size'), lb=document.getElementById('gs-label');
+  if (sl) sl.value = mapState.gridSize;
+  if (lb) lb.textContent = mapState.gridSize + 'px';
+  applyTokSize(mapState.tokSize || 44);
+}
+
+window.setBg = function(m) { update(ref(db, SR+'/map'), { bgMode:m }); };
+
+window.setTokSize = function(v) {
+  document.getElementById('tok-size-label').textContent = v + 'px';
+  applyTokSize(parseInt(v));
+  update(ref(db, SR+'/map'), { tokSize: parseInt(v) });
+};
+
+function applyTokSize(size) {
+  document.documentElement.style.setProperty('--tok-size', size + 'px');
+  const sl = document.getElementById('tok-size-slider');
+  const lb = document.getElementById('tok-size-label');
+  if (sl) sl.value = size;
+  if (lb) lb.textContent = size + 'px';
+};
+window.setGridSize = function(v) { document.getElementById('gs-label').textContent=v+'px'; update(ref(db,SR+'/map'),{gridSize:parseInt(v)}); };
+window.loadBgImg = function(e) {
+  const f=e.target.files[0]; if(!f) return;
+  const reader=new FileReader();
+  reader.onload = ev => {
+    const img=new Image();
+    img.onload = () => {
+      const c=document.createElement('canvas'), maxW=1200, scale=Math.min(1,maxW/img.width);
+      c.width=img.width*scale; c.height=img.height*scale;
+      c.getContext('2d').drawImage(img,0,0,c.width,c.height);
+      bgImageEl=img;
+      update(ref(db,SR+'/map'),{bgImgData:c.toDataURL('image/jpeg',0.75)});
+    };
+    img.src=ev.target.result;
+  };
+  reader.readAsDataURL(f);
+};
+
+function buildSwatches() {
+  const el=document.getElementById('color-swatches'); if(!el) return; el.innerHTML='';
+  BG_OPTS.forEach(o => {
+    const d=document.createElement('div'); d.className='cswatch'+(o.v===mapState.bgColor?' on':'');
+    d.style.background=o.v; d.title=o.t;
+    d.onclick=()=>{ bgImageEl=null; document.querySelectorAll('.cswatch').forEach(s=>s.classList.toggle('on',s===d)); update(ref(db,SR+'/map'),{bgColor:o.v,bgImgData:null}); };
+    el.appendChild(d);
+  });
+}
+
+// JETONS
+function makeTokEl(c, layer) {
+  const isMine = layer==='pv' && c.id===myCharId;
+  const locked = layer==='pv' && !isMine;
+  // Cacher le jeton aux joueurs si hidden=true (sauf au joueur qui le possède)
+  if (layer==='pv' && c.hidden && !isMine) return null;
+  const t = document.createElement('div');
+  t.className = 'tok'+(locked?' locked':'')+(isMine?' mine':'');
+  t.id = (layer==='pv'?'pv-t':'mj-t')+c.id;
+  t.style.cssText = 'left:'+c.x+'%;top:'+c.y+'%;'+(isMine?'--tok-color:'+c.color+';':'');
+  if (locked) t.style.pointerEvents='none';
+  // Côté MJ : jeton semi-transparent si hidden
+  const mjHiddenStyle = (layer==='mj' && c.hidden) ? 'opacity:0.35;filter:grayscale(0.5);' : '';
+  const ring = isMine ? 'box-shadow:0 0 0 3px #fff,0 0 0 5px '+c.color : '';
+  const inner = c.customImg
+    ? '<img src="'+c.customImg+'" style="width:100%;height:100%;object-fit:cover;border-radius:50%;display:block">'
+    : '<span style="font-size:22px;line-height:1">'+c.emoji+'</span>';
+  // Indicateur visuel MJ si caché
+  const hiddenBadge = (layer==='mj' && c.hidden) ? '<div style="position:absolute;top:-4px;right:-4px;font-size:10px;background:#e24444;border-radius:50%;width:16px;height:16px;display:flex;align-items:center;justify-content:center;border:1px solid #1a1a1a">🙈</div>' : '';
+  t.innerHTML = '<div style="position:relative;'+mjHiddenStyle+'"><div class="tok-circle" style="background:'+c.color+'25;border-color:'+c.color+';'+ring+'">'+inner+'</div>'+hiddenBadge+'</div>'
+    +'<div class="tok-name" style="'+(layer==='mj'&&c.hidden?'opacity:0.4':'')+'">'+c.name+(isMine?' ✦':'')+'</div>';
+  if (!locked) {
+    t.addEventListener('mousedown', e=>startDrag(e,c.id,layer));
+    t.addEventListener('touchstart', e=>startDragT(e,c.id,layer),{passive:false});
+  }
+  return t;
+}
+function renderMJTokens() {
+  const l=document.getElementById('tok-layer'); if(!l) return;
+  l.innerHTML=''; Object.values(chars).forEach(c=>{ const el=makeTokEl(c,'mj'); if(el) l.appendChild(el); });
+}
+function renderPVTokens() {
+  const l=document.getElementById('pv-tok-layer'); if(!l) return;
+  l.innerHTML=''; Object.values(chars).forEach(c=>{ const el=makeTokEl(c,'pv'); if(el) l.appendChild(el); });
+}
+
+// DRAG
+function getRect(layer) {
+  return (layer==='pv' ? document.getElementById('pv-map-wrap') : document.getElementById('map-wrap')).getBoundingClientRect();
+}
+function startDrag(e,id,layer) {
+  e.preventDefault(); drag=id; dragLayer=layer;
+  const r=getRect(layer), c=chars[id];
+  dox=e.clientX-r.left-(c.x||50)/100*r.width; doy=e.clientY-r.top-(c.y||50)/100*r.height;
+  document.addEventListener('mousemove',onDrag); document.addEventListener('mouseup',endDrag);
+}
+function startDragT(e,id,layer) {
+  e.preventDefault(); drag=id; dragLayer=layer;
+  const r=getRect(layer), c=chars[id], t=e.touches[0];
+  dox=t.clientX-r.left-(c.x||50)/100*r.width; doy=t.clientY-r.top-(c.y||50)/100*r.height;
+  document.addEventListener('touchmove',onDragT,{passive:false}); document.addEventListener('touchend',endDragT);
+}
+function moveDrag(cx,cy) {
+  if(!drag) return;
+  const r=getRect(dragLayer), c=chars[drag];
+  c.x=Math.max(2,Math.min(97,(cx-r.left-dox)/r.width*100));
+  c.y=Math.max(2,Math.min(97,(cy-r.top-doy)/r.height*100));
+  const el=document.getElementById((dragLayer==='pv'?'pv-t':'mj-t')+drag);
+  if (el) { el.style.left=c.x+'%'; el.style.top=c.y+'%'; }
+}
+function onDrag(e){moveDrag(e.clientX,e.clientY);}
+function onDragT(e){e.preventDefault();moveDrag(e.touches[0].clientX,e.touches[0].clientY);}
+function endDrag() {
+  if(drag) update(ref(db,SR+'/chars/'+drag),{x:chars[drag].x,y:chars[drag].y});
+  drag=null; dragLayer=null;
+  document.removeEventListener('mousemove',onDrag); document.removeEventListener('mouseup',endDrag); renderList();
+}
+function endDragT() {
+  if(drag) update(ref(db,SR+'/chars/'+drag),{x:chars[drag].x,y:chars[drag].y});
+  drag=null; dragLayer=null;
+  document.removeEventListener('touchmove',onDragT); document.removeEventListener('touchend',endDragT); renderList();
+}
+
+// MODAL MJ
+window.openModal = function(id) {
+  editId=id;
+  const c=id?chars[id]:null;
+  document.getElementById('modal-title').textContent = id ? 'Modifier le personnage' : 'Ajouter un personnage';
+  document.getElementById('p-name').value = c ? c.name : '';
+  selEmoji = c ? c.emoji : EMOJIS[0];
+  selColor = c ? c.color : COLORS[0];
+  selCustomImg = c ? (c.customImg || null) : null;
+  document.getElementById('modal-icon-file').value = '';
+  refreshIconPreview();
+  buildModalInputs();
+  document.getElementById('modal-wrap').classList.add('open');
+};
+
+window.closeModal = function() { document.getElementById('modal-wrap').classList.remove('open'); };
+
+// Listener sur le file input de la modal
+document.getElementById('modal-icon-file').addEventListener('change', function(e) {
+  const f=e.target.files[0]; if(!f) return;
+  const reader=new FileReader();
+  reader.onload=ev=>{
+    const img=new Image();
+    img.onload=()=>{
+      const canvas=document.createElement('canvas');
+      const side=Math.min(img.width,img.height,200);
+      canvas.width=side; canvas.height=side;
+      const ctx=canvas.getContext('2d');
+      const sx=(img.width-Math.min(img.width,img.height))/2;
+      const sy=(img.height-Math.min(img.width,img.height))/2;
+      const sw=Math.min(img.width,img.height);
+      ctx.drawImage(img,sx,sy,sw,sw,0,0,side,side);
+      selCustomImg=canvas.toDataURL('image/png');
+      refreshIconPreview();
+    };
+    img.src=ev.target.result;
+  };
+  reader.readAsDataURL(f);
+});
+
+window.clearModalIcon = function() {
+  selCustomImg=null;
+  document.getElementById('modal-icon-file').value='';
+  refreshIconPreview();
+};
+
+function refreshIconPreview() {
+  const circle=document.getElementById('modal-icon-circle');
+  const removeBtn=document.getElementById('modal-remove-btn');
+  if (!circle) return;
+  if (selCustomImg) {
+    circle.classList.add('has-img');
+    circle.innerHTML='<img src="'+selCustomImg+'" style="width:100%;height:100%;object-fit:cover;border-radius:50%;display:block">';
+    if (removeBtn) removeBtn.style.display='block';
+  } else {
+    circle.classList.remove('has-img');
+    circle.innerHTML='<span id="modal-icon-placeholder" style="font-size:26px">📤</span>';
+    if (removeBtn) removeBtn.style.display='none';
+  }
+}
+
+function buildModalInputs() {
+  const eg=document.getElementById('egrid'); eg.innerHTML='';
+  EMOJIS.forEach(e=>{
+    const d=document.createElement('div'); d.className='eopt'+(e===selEmoji?' on':'');
+    d.textContent=e; d.onclick=()=>{selEmoji=e;buildModalInputs();};
+    eg.appendChild(d);
+  });
+  const cg=document.getElementById('cgrid'); cg.innerHTML='';
+  COLORS.forEach(c=>{
+    const d=document.createElement('div');
+    d.style.cssText='width:22px;height:22px;border-radius:50%;background:'+c+';cursor:pointer;border:3px solid '+(c===selColor?'#fff':'transparent');
+    d.onclick=()=>{selColor=c;buildModalInputs();};
+    cg.appendChild(d);
+  });
+}
+
+window.saveChar = function() {
+  const name=document.getElementById('p-name').value.trim(); if(!name) return;
+  const id=editId||('c'+Date.now());
+  const existing=chars[id]||{};
+  set(ref(db,SR+'/chars/'+id),{
+    id:id, name:name, emoji:selEmoji, color:selColor,
+    x:existing.x||50, y:existing.y||50,
+    customImg: selCustomImg !== undefined ? selCustomImg : (existing.customImg||null)
+  });
+  closeModal();
+  showToast(name + (editId?' modifie':' ajoute') + ' !');
+};
+
+window.removeChar = function(id) {
+  if(!confirm('Retirer ce personnage ?')) return;
+  remove(ref(db,SR+'/chars/'+id));
+  if(myCharId===id) myCharId=null;
+};
+
+window.toggleHidden = function(id) {
+  const c=chars[id]; if(!c) return;
+  update(ref(db,SR+'/chars/'+id),{hidden: !c.hidden});
+};
+
+window.resetSession = function() {
+  if(!confirm('Reinitialiser toute la session ?')) return;
+  remove(ref(db,SR+'/chars'));
+  set(ref(db,SR+'/map'),{bgMode:'none',bgColor:'#1c1c1c',gridSize:40,bgImgData:null});
+  bgImageEl=null; showToast('Session reinitialisee');
+};
+
+// PICKER JOUEUR
+window.openPicker = function() {
+  const pl=document.getElementById('picker-list'); pl.innerHTML='';
+  const list=Object.values(chars);
+  if(list.length===0) {
+    pl.innerHTML='<p style="color:#666;font-size:13px;text-align:center;padding:24px 0">Aucun personnage.<br>Demandez au MJ d\'en creer !</p>';
+  }
+  list.forEach(c=>{
+    const d=document.createElement('div'); d.className='pick-card';
+    const avInner=c.customImg?'<img src="'+c.customImg+'">':`<span style="font-size:24px">${c.emoji}</span>`;
+    d.innerHTML='<div class="pick-av" style="background:'+c.color+'20;border-color:'+c.color+'">'+avInner+'</div>'
+      +'<div style="flex:1;min-width:0"><div class="pick-name">'+c.name+'</div><div class="pick-sub">'+(c.customImg?'Icone personnalisee':'Icone par defaut')+'</div></div>'
+      +'<div class="pick-actions">'
+      +'<button class="pick-play" onclick="selectChar(\''+c.id+'\')">Jouer</button>'
+      +'<label class="pick-upload-lbl">📤 Mon icone<input type="file" accept="image/*" style="display:none" onchange="uploadPlayerIcon(event,\''+c.id+'\')"></label>'
+      +'</div>';
+    pl.appendChild(d);
+  });
+  document.getElementById('char-picker').classList.add('open');
+};
+
+window.selectChar = function(id) {
+  myCharId=id;
+  document.getElementById('char-picker').classList.remove('open');
+  document.getElementById('change-btn').style.display='inline-flex';
+  updatePVBar(); renderPVTokens();
+};
+
+window.uploadPlayerIcon = function(e,id) {
+  const f=e.target.files[0]; if(!f) return;
+  const reader=new FileReader();
+  reader.onload=ev=>{
+    const img=new Image();
+    img.onload=()=>{
+      const canvas=document.createElement('canvas');
+      const side=Math.min(img.width,img.height,200);
+      canvas.width=side; canvas.height=side;
+      const sx=(img.width-Math.min(img.width,img.height))/2;
+      const sy=(img.height-Math.min(img.width,img.height))/2;
+      const sw=Math.min(img.width,img.height);
+      canvas.getContext('2d').drawImage(img,sx,sy,sw,sw,0,0,side,side);
+      update(ref(db,SR+'/chars/'+id),{customImg:canvas.toDataURL('image/png')});
+      showToast('Icone mise a jour !');
+      if(myCharId===id) setTimeout(updatePVBar,300);
+      setTimeout(openPicker,400);
+    };
+    img.src=ev.target.result;
+  };
+  reader.readAsDataURL(f);
+};
+
+function updatePVBar() {
+  const c=myCharId?chars[myCharId]:null;
+  const av=document.getElementById('pv-av'); if(!av) return;
+  if(c){
+    av.style.background=c.color+'25'; av.style.borderColor=c.color;
+    av.innerHTML=c.customImg?'<img src="'+c.customImg+'" style="width:36px;height:36px;border-radius:50%;object-fit:cover">':'<span style="font-size:20px">'+c.emoji+'</span>';
+    document.getElementById('pv-name').textContent=c.name;
+    document.getElementById('pv-hint').textContent='Glissez votre pion - les autres sont figes';
+    document.getElementById('pv-my-name').textContent=c.name;
+  }
+  document.getElementById('pv-char-count').textContent=Object.keys(chars).length;
+}
+
+// UTILITAIRES
+window.copyLink = function(btn) {
+  const url=window.location.origin+window.location.pathname+'?s='+SESSION_ID;
+  navigator.clipboard.writeText(url).catch(()=>{});
+  const orig=btn.innerHTML; btn.innerHTML='Copie !';
+  setTimeout(()=>btn.innerHTML=orig,2000);
+};
+
+function showToast(msg) {
+  const t=document.getElementById('toast');
+  t.textContent=msg; t.classList.add('show');
+  setTimeout(()=>t.classList.remove('show'),2500);
+}
+
+// INIT
+function init() {
+  const url=window.location.origin+window.location.pathname+'?s='+SESSION_ID;
+  const el=document.getElementById('session-url-display'); if(el) el.textContent=url;
+  const ws=document.getElementById('welcome-session'); if(ws) ws.textContent='#'+SESSION_ID;
+  const ps=document.getElementById('pv-session-id'); if(ps) ps.textContent='#'+SESSION_ID;
+  buildSwatches(); buildModalInputs();
+  setTimeout(()=>document.getElementById('loader').classList.add('hide'),900);
+  window.addEventListener('resize',()=>{
+    if(myRole==='mj') drawBg();
+    else if(myRole==='player') { drawPVBg(); renderPVTokens(); }
+  });
+}
+init();
+</script>
+</body>
+</html>
