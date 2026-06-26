@@ -1335,7 +1335,7 @@ function renderInitPanel(side) {
       card.className = 'init-card';
       const avInner = c.customImg ? '<img src="'+c.customImg+'">' : '<span style="font-size:11px">'+c.emoji+'</span>';
       const scoreEl = canInput
-        ? '<input class="init-input" type="number" min="1" max="30" placeholder="?" value="'+score+'" oninput="submitInitScore(''+c.id+'', this.value)">'
+        ? '<input class="init-input" type="number" min="1" max="30" placeholder="?" value="'+score+'" oninput="submitInitScore(''+c.id+'', this.value)">';
         : '<span class="init-score" style="color:#555">'+(score||'?')+'</span>';
       card.innerHTML =
         '<div class="init-av" style="background:'+c.color+'20;border-color:'+c.color+'">'+avInner+'</div>'+
